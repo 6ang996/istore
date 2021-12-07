@@ -305,7 +305,7 @@ function get_support_backup_features()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
@@ -358,7 +358,7 @@ function get_backup_app_list_file_path()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
@@ -375,7 +375,7 @@ function get_backup_app_list()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
@@ -400,7 +400,7 @@ function get_available_backup_file_list()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
@@ -437,7 +437,7 @@ function get_local_backup_dir_path()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
