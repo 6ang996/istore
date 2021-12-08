@@ -305,7 +305,7 @@ function get_support_backup_features()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
@@ -315,12 +315,8 @@ end
 function backup()
     local code, out, err, ret
     local path = luci.http.formvalue("path")
-    ret = 200
-    stdout = path
-    luci.http.prepare_content("application/json")
-    luci.http.write_json(ret)
     if path ~= "" then
-        code,out,err = is_exec(myopkg .. " backup" .. path)
+        code,out,err = is_exec(myopkg .. " backup " .. path)
     else
         code,out,err = is_exec(myopkg .. " backup")
     end
@@ -338,7 +334,7 @@ function restore()
     local path = luci.http.formvalue("path")
     local code, out, err, ret
     if path ~= "" then
-        code,out,err = is_exec(myopkg .. " restore" .. path)
+        code,out,err = is_exec(myopkg .. " restore " .. path)
     else
         code,out,err = is_exec(myopkg .. " restore")
     end
@@ -362,7 +358,7 @@ function get_backup_app_list_file_path()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
@@ -379,7 +375,7 @@ function get_backup_app_list()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
@@ -387,16 +383,24 @@ end
 
 -- call get_backget_available_backup_file_listup_app_list
 function get_available_backup_file_list()
+    local r,o,e
+    local path = luci.http.formvalue("path")
     local ret = {
         code = 500,
         msg = "Unknown"
     }
-    local r,o,e = is_exec(myopkg .. " get_available_backup_file_list")
+    if path ~= "" then
+        r,o,e = is_exec(myopkg .. " get_available_backup_file_list " .. path)
+    else
+        -- set error code
+        r = 1
+        e = "Path Unknown"
+    end
     if r ~= 0 then
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
@@ -407,7 +411,7 @@ function set_local_backup_dir_path()
     local path = luci.http.formvalue("path")
     local code, out, err, ret
     if path ~= "" then
-        code,out,err = is_exec(myopkg .. " set_local_backup_dir_path" .. path)
+        code,out,err = is_exec(myopkg .. " set_local_backup_dir_path " .. path)
     else
         code = 500
         out = ""
@@ -433,7 +437,7 @@ function get_local_backup_dir_path()
         ret.msg = e
     else
         ret.code = o == "" and 304 or 200
-        ret.msg = o:gsub("[\r\n]", "")
+        ret.msg = o
     end
     luci.http.prepare_content("application/json")
     luci.http.write_json(ret)
