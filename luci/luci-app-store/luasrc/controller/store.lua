@@ -1,5 +1,17 @@
 module("luci.controller.store", package.seeall)
 
+--[[
+目前暂时这么来定义返回值标准：
+1. 如果是脚本的返回，我看了下原来的，是 
+{"code":0, "stdout":"", "stderr":""}
+
+2. 如果是已知的错误的返回，则 
+{"code":xxx, "msg":"错误码"}
+
+3. 如果是数据的返回
+{"code":0, "result":  {对象} }
+]]
+
 local myopkg = "is-opkg"
 local page_index = {"admin", "store", "pages"}
 
