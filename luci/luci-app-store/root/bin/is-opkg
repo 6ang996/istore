@@ -10,7 +10,7 @@ OPKG_CONF_DIR=${IS_ROOT}/etc/opkg
 APP_LIST_FILE=/etc/istore/app.list
 BACKUP_CONFIG_FILE=/etc/istore/last_backup_dir
 FEEDS_SERVER=https://istore.linkease.com/repo
-ARCH=`opkg -f /dev/null print-architecture | grep -v 'arch all' | grep -v 'arch noarch' | cut -d ' ' -f2`
+ARCH=`jsonfilter -i /etc/.app_store.id -e '$.arch'`
 
 # for istore self upgrade
 ISTORE_PKG=luci-app-store
@@ -39,10 +39,23 @@ opkg_wrap() {
     OPKG_CONF_DIR=${OPKG_CONF_DIR} opkg -f ${IS_ROOT}/etc/opkg.conf "$@"
 }
 
+fcurl() {
+    curl --fail --show-error "$@"
+}
+
 update() {
-    uclient-fetch -O ${OPKG_CONF_DIR}/meta.conf "${FEEDS_SERVER}/all/meta.conf" && \
-    uclient-fetch -O ${OPKG_CONF_DIR}/all.conf "${FEEDS_SERVER}/all/isfeeds.conf" && \
-    uclient-fetch -O ${OPKG_CONF_DIR}/arch.conf "${FEEDS_SERVER}/${ARCH}/isfeeds.conf" && \
+    if [ -z "${ARCH}" ]; then
+        echo "Get architecture failed" >&2
+        echo "/etc/.app_store.id:" >&2
+        cat /etc/.app_store.id >&2
+        return 1
+    fi
+
+    fcurl -o ${OPKG_CONF_DIR}/meta.conf "${FEEDS_SERVER}/all/meta.conf" && \
+      fcurl -o ${OPKG_CONF_DIR}/all.conf "${FEEDS_SERVER}/all/isfeeds.conf" && \
+      fcurl -o ${OPKG_CONF_DIR}/arch.conf "${FEEDS_SERVER}/${ARCH}/isfeeds.conf" || \
+      return 1
+
     opkg -f ${IS_ROOT}/etc/opkg_o.conf --offline-root ${IS_ROOT} update
 
     return 0
@@ -57,7 +70,7 @@ update_if_outdate() {
 }
 
 check_self_upgrade() {
-    local newest=`uclient-fetch -q -O - --timeout=5 ${ISTORE_INDEX} | gunzip | grep -FA10 "Package: ${ISTORE_PKG}" | grep -Fm1 'Version: ' | sed 's/^Version: //'`
+    local newest=`curl --connect-timeout 2 --max-time 5 -s ${ISTORE_INDEX} | gunzip | grep -FA10 "Package: ${ISTORE_PKG}" | grep -Fm1 'Version: ' | sed 's/^Version: //'`
     local current=`grep -Fm1 'Version: ' /usr/lib/opkg/info/${ISTORE_PKG}.control | sed 's/^Version: //'`
     if [ "v$newest" = "v" -o "v$current" = "v" ]; then
         echo "Check version failed!" >&2
