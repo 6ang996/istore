@@ -252,7 +252,7 @@ backup() {
         for PKG_NAME_TEMP in ${temp_list}; do
             REAL_PKG_NAME=`cat ${IS_ROOT}/all_installed_package.list | sort -u | grep "^${PKG_NAME_TEMP}" | head -n 1`
             if [ "${REAL_PKG_NAME}" != "${PKG_NAME_TEMP}" ]; then
-                temp_list=`echo "${temp_list}" | sed 's/'"${PKG_NAME_TEMP}"'/'"${REAL_PKG_NAME}"'/'`
+                temp_list=`echo "${temp_list}" | sed 's/^\t'"${PKG_NAME_TEMP}"'$/\t'"${REAL_PKG_NAME}"'/'`
             fi
         done
 
@@ -260,7 +260,7 @@ backup() {
         [ -n "${IS_DEBUG}" ] && echo -e "temp_list:\n""${temp_list}"
         [ -n "${IS_DEBUG}" ] && echo -e "appdep_list:\n""${appdep_list}"
 
-        temp_list=`echo "${temp_list}" | xargs opkg depends | grep -v "depends on:" | sort -u`
+        temp_list=`echo "${temp_list}" | xargs opkg depends | grep -v "depends on:" | grep -v " (>= " | grep -v " (= " | sort -u`
     done
 
     appdep_list_all=`echo "${appdep_list}" | cut -f2 | grep -v "^$" | awk '!seen[$0]++'`
@@ -285,7 +285,7 @@ backup() {
     #only backup non pre installed ipk
     cp ${IS_ROOT}/appdep.list ${IS_ROOT}/appdep_strip.list
     for pre_installed_pkg in `cat ${IS_ROOT}/appdep.list ${IS_ROOT}/pre_installed_package.list | sort -n | uniq -d`; do
-        sed -i '/'"$pre_installed_pkg"'/d' ${IS_ROOT}/appdep_strip.list
+        sed -i '/^'"$pre_installed_pkg"'$/d' ${IS_ROOT}/appdep_strip.list
     done
 
     rm -f $BACKUP_PATH/backup_istore_$date/appdepipk.list
