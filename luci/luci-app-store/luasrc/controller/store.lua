@@ -25,7 +25,7 @@ function index()
     entry({"admin", "store", "do_self_upgrade"}, post("do_self_upgrade"))
 
     entry({"admin", "store", "get_support_backup_features"}, call("get_support_backup_features"))
-    entry({"admin", "store", "light_backup"}, post("light_backup"))
+    entry({"admin", "store", "light_backup"}, call("light_backup"))
     entry({"admin", "store", "local_backup"}, post("local_backup"))
     entry({"admin", "store", "light_restore"}, post("light_restore"))
     entry({"admin", "store", "local_restore"}, post("local_restore"))
@@ -358,16 +358,18 @@ function get_support_backup_features()
     end
 end
 
--- post light_backup
+-- call light_backup
 function light_backup()
-    local code, out, err, ret
-    code,out,err = is_exec(myopkg .. " backup")
-    ret = {
-        code = code,
-        stdout = out,
-        stderr = err
-    }
-    if code == 0 then
+    local jsonc = require "luci.jsonc"
+    local error_ret = {code = 500, msg = "Unknown"}
+    local success_ret = {code = 200,result = "Unknown"}
+    local r,o,e = is_exec(myopkg .. " backup")
+
+    if r ~= 0 then
+        error_ret.msg = e
+        luci.http.prepare_content("application/json")
+        luci.http.write_json(error_ret)
+    else
         local light_backup_cmd  = "tar -c %s | gzip 2>/dev/null"
         local loght_backup_filelist = "/etc/istore/app.list"
         local reader = ltn12_popen(light_backup_cmd:format(loght_backup_filelist))
@@ -375,9 +377,6 @@ function light_backup()
 			luci.sys.hostname(), os.date("%Y-%m-%d")})
 		luci.http.prepare_content("application/x-targz")
 		luci.ltn12.pump.all(reader, luci.http.write)
-    else
-        luci.http.prepare_content("application/json")
-        luci.http.write_json(ret)
     end
 end
 
