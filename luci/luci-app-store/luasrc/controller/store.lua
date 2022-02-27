@@ -25,7 +25,8 @@ function index()
     entry({"admin", "store", "do_self_upgrade"}, post("do_self_upgrade"))
 
     entry({"admin", "store", "get_support_backup_features"}, call("get_support_backup_features"))
-    entry({"admin", "store", "light_backup"}, call("light_backup"))
+    entry({"admin", "store", "light_backup"}, post("light_backup"))
+    entry({"admin", "store", "get_light_backup_file"}, call("get_light_backup_file"))
     entry({"admin", "store", "local_backup"}, post("local_backup"))
     entry({"admin", "store", "light_restore"}, post("light_restore"))
     entry({"admin", "store", "local_restore"}, post("local_restore"))
@@ -358,7 +359,7 @@ function get_support_backup_features()
     end
 end
 
--- call light_backup
+-- post light_backup
 function light_backup()
     local jsonc = require "luci.jsonc"
     local error_ret = {code = 500, msg = "Unknown"}
@@ -370,14 +371,22 @@ function light_backup()
         luci.http.prepare_content("application/json")
         luci.http.write_json(error_ret)
     else
-        local light_backup_cmd  = "tar -c %s | gzip 2>/dev/null"
-        local loght_backup_filelist = "/etc/istore/app.list"
-        local reader = ltn12_popen(light_backup_cmd:format(loght_backup_filelist))
-        luci.http.header('Content-Disposition', 'attachment; filename="light-backup-%s-%s.tar.gz"' % {
-			luci.sys.hostname(), os.date("%Y-%m-%d")})
-		luci.http.prepare_content("application/x-targz")
-		luci.ltn12.pump.all(reader, luci.http.write)
+        success_ret.code = o == "" and 304 or 200
+        success_ret.result = o:gsub("[\r\n]", "")
+        luci.http.prepare_content("application/json")
+        luci.http.write_json(success_ret)
     end
+end
+
+-- call get_light_backup_file
+function get_light_backup_file()
+    local light_backup_cmd  = "tar -c %s | gzip 2>/dev/null"
+    local loght_backup_filelist = "/etc/istore/app.list"
+    local reader = ltn12_popen(light_backup_cmd:format(loght_backup_filelist))
+    luci.http.header('Content-Disposition', 'attachment; filename="light-backup-%s-%s.tar.gz"' % {
+        luci.sys.hostname(), os.date("%Y-%m-%d")})
+    luci.http.prepare_content("application/x-targz")
+    luci.ltn12.pump.all(reader, luci.http.write)
 end
 
 -- post local_backup
